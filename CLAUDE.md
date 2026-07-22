@@ -48,6 +48,10 @@ mypy شغّال بـ `strict = true`. متضيفش `# type: ignore` من غير 
   نعدّل الأوزان ونعيد الحساب من غير ما نشغّل الـ LLM تاني.
 - **الـ agents ما بتلمسش SQLAlchemy.** كل وصول للبيانات عبر `app/core/repositories/`.
   ده اللي بيخلي الـ agents قابلة للاختبار بقاعدة بيانات مؤقتة.
+- **User-Agent شبه المتصفح.** بعض الـ CDNs (Cloudflare) بترجّع 403 لأي
+  User-Agent واضح إنه بوت. الافتراضي دلوقتي Mozilla/5.0 وقابل للتغيير.
+- **`check-feeds`** بيفحص صحة كل الفيدات في ثواني من غير ما يخزّن حاجة —
+  استخدمه بعد أي تعديل على sources.yaml.
 - **الـ retry بيفرّق بين مؤقت ودائم.** 4xx بيفشل فورًا (403 مش هيتصلح بإعادة
   محاولة)؛ 408/429/5xx بس اللي بيتعاد. شوف `TRANSIENT_STATUSES`.
 - **`sources.yaml` هو مصدر الحقيقة للمصادر.** الترتيب: قيمة المصدر > افتراضي
@@ -67,6 +71,7 @@ mypy شغّال بـ `strict = true`. متضيفش `# type: ignore` من غير 
 uv pip install -e ".[dev]"
 python main.py rebuild-db --force   # يبني الجداول ويزرع الـ 15 تصنيف
 python main.py stats                # إحصائيات القاعدة
+python main.py check-feeds          # يفحص صحة كل الفيدات
 python main.py --help               # كل الأوامر
 ```
 

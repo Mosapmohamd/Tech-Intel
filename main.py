@@ -16,6 +16,7 @@ from app.core.services import (
 )
 from app.core.services import (
     bootstrap_database,
+    check_feeds,
     collect_stats,
     run_collection,
     sync_sources,
@@ -56,6 +57,27 @@ def collect(
     for outcome in result.per_source:
         if not outcome.ok:
             typer.secho(f"  ✗ {outcome.slug}: {outcome.error}", fg=typer.colors.RED)
+
+
+@app.command("check-feeds")
+def check_feeds_command(
+    source: str | None = typer.Option(None, "--source", "-s", help="Check one source only."),
+) -> None:
+    """Probe every feed and report which ones are reachable and parseable."""
+    setup_logging()
+    results = check_feeds(only=source)
+    failures = [r for r in results if not r.ok]
+
+    typer.secho(f"\n{'SLUG':<22}RESULT", bold=True)
+    for result in results:
+        typer.secho(
+            f"{result.slug:<22}{result.summary}",
+            fg=typer.colors.RED if not result.ok else None,
+        )
+    colour = typer.colors.GREEN if not failures else typer.colors.YELLOW
+    typer.secho(f"\n{len(results) - len(failures)}/{len(results)} feeds healthy.\n", fg=colour)
+    if failures:
+        raise typer.Exit(code=1)
 
 
 @app.command()

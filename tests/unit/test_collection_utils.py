@@ -199,8 +199,8 @@ class TestFeedClientStatusHandling:
     """A 4xx must fail immediately; a 5xx must be retried."""
 
     def _client(self, handler: object, **kwargs: object) -> FeedClient:
-        transport = httpx.MockTransport(handler)  # type: ignore[arg-type]
-        return FeedClient(client=httpx.Client(transport=transport), **kwargs)  # type: ignore[arg-type]
+        """Build a real FeedClient over a mock transport, so default headers apply."""
+        return FeedClient(transport=httpx.MockTransport(handler), **kwargs)  # type: ignore[arg-type]
 
     def test_permanent_status_is_not_retried(self) -> None:
         calls = {"n": 0}
@@ -252,3 +252,33 @@ class TestFeedClientStatusHandling:
         assert response.not_modified is True
         assert seen["if-none-match"] == 'W/"v1"'
         assert seen["if-modified-since"] == "Mon, 01 Jan 2026 00:00:00 GMT"
+
+    def test_browser_like_user_agent_is_sent(self) -> None:
+        seen: dict[str, str] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen.update(request.headers)
+            return httpx.Response(200, content=RSS_FEED)
+
+        self._client(handler).fetch("https://x.example.com/feed")
+        assert "Mozilla/5.0" in seen["user-agent"]
+
+    def test_user_agent_can_be_overridden(self) -> None:
+        seen: dict[str, str] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen.update(request.headers)
+            return httpx.Response(200, content=RSS_FEED)
+
+        self._client(handler, user_agent="CustomAgent/1.0").fetch("https://x.example.com/feed")
+        assert seen["user-agent"] == "CustomAgent/1.0"
+
+    def test_xml_accept_header_is_sent(self) -> None:
+        seen: dict[str, str] = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            seen.update(request.headers)
+            return httpx.Response(200, content=RSS_FEED)
+
+        self._client(handler).fetch("https://x.example.com/feed")
+        assert "application/rss+xml" in seen["accept"]

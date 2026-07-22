@@ -14,7 +14,13 @@ from loguru import logger
 
 from app.utils.retry import retry_call
 
-USER_AGENT = "TechIntelligenceAgent/0.1 (+https://github.com/Mosapmohamd/Tech-Intel)"
+#: Some CDNs (Cloudflare in particular) return 403 to obviously-automated
+#: User-Agents. A browser-like string is what a normal feed reader sends and is
+#: what these hosts expect; the real identity is still declared via ``From``.
+DEFAULT_USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+)
 
 #: Status codes worth another attempt. A 403 or 404 will never succeed on
 #: retry, so retrying them just wastes the backoff budget on every run.
@@ -62,16 +68,33 @@ class FeedClient:
         *,
         timeout: float = 30.0,
         attempts: int = 3,
+        user_agent: str = DEFAULT_USER_AGENT,
+        transport: httpx.BaseTransport | None = None,
         client: httpx.Client | None = None,
     ) -> None:
+        """Build a feed client.
+
+        Args:
+            timeout: Per-request timeout in seconds.
+            attempts: Total tries per fetch, including the first.
+            user_agent: Overrides the default browser-like agent.
+            transport: Injectable transport; the client is still built here, so
+                the real default headers are exercised. Preferred in tests.
+            client: A fully pre-built client. Its own headers are used as-is.
+        """
         self._attempts = attempts
         self._owns_client = client is None
         self._client = client or httpx.Client(
             timeout=timeout,
             follow_redirects=True,
+            transport=transport,
             headers={
-                "User-Agent": USER_AGENT,
-                "Accept": "application/rss+xml, application/xml, */*",
+                "User-Agent": user_agent,
+                "Accept": (
+                    "application/rss+xml, application/atom+xml, "
+                    "application/xml;q=0.9, text/xml;q=0.9, */*;q=0.8"
+                ),
+                "Accept-Language": "en-US,en;q=0.9",
             },
         )
 
