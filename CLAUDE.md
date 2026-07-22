@@ -32,8 +32,9 @@ mypy شغّال بـ `strict = true`. متضيفش `# type: ignore` من غير 
 
 - ✅ **Phase 1** — هيكل المشروع، CLI skeleton بـ 10 أوامر، pyproject + tooling
 - ✅ **Phase 2** — قاعدة البيانات: 11 جدول، 10 repositories، bootstrap + stats، 20 اختبار
-- ⬜ **Phase 3** — RSS collectors ← **التالي**
-- ⬜ Phase 4 استخراج · 5 إزالة تكرار · 6 تقييم · 7 Ollama · 8 تقارير
+- ✅ **Phase 3** — RSS collectors: sources.yaml بـ26 مصدر، FeedClient بـconditional GET، parser، CollectorAgent، 75 اختبار
+- ⬜ **Phase 4** — استخراج المحتوى (trafilatura) ← **التالي**
+- ⬜ Phase 5 إزالة تكرار · 6 تقييم · 7 Ollama · 8 تقارير
 - ⬜ Phase 9 إيميل HTML · 10 scheduler · 11 اختبارات · 12 توثيق
 
 ## قرارات معمارية مهمة
@@ -47,6 +48,10 @@ mypy شغّال بـ `strict = true`. متضيفش `# type: ignore` من غير 
   نعدّل الأوزان ونعيد الحساب من غير ما نشغّل الـ LLM تاني.
 - **الـ agents ما بتلمسش SQLAlchemy.** كل وصول للبيانات عبر `app/core/repositories/`.
   ده اللي بيخلي الـ agents قابلة للاختبار بقاعدة بيانات مؤقتة.
+- **الـ retry بيفرّق بين مؤقت ودائم.** 4xx بيفشل فورًا (403 مش هيتصلح بإعادة
+  محاولة)؛ 408/429/5xx بس اللي بيتعاد. شوف `TRANSIENT_STATUSES`.
+- **`sources.yaml` هو مصدر الحقيقة للمصادر.** الترتيب: قيمة المصدر > افتراضي
+  المجموعة > `defaults` العام. `add-source` بيكتب في الملف الأول بعدين القاعدة.
 - **الـ prompts ملفات جوّه `app/prompts/`** — ممنوع أي prompt مكتوب جوّه الكود.
 - **كل مخرجات الـ LLM فيها provenance** (`model_name`, `prompt_version`,
   `generation_seconds`) عشان نعيد توليد السجلات القديمة لما نغيّر prompt.

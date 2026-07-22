@@ -1,0 +1,174 @@
+# RSS source catalogue.
+#
+# This file is the declarative source of truth for feeds. Edit it and run
+# `python main.py collect` (or `list-sources --sync`) — no code changes needed.
+#
+# Fields per source:
+#   slug              unique stable id (required)
+#   name              display name (required)
+#   feed_url          RSS/Atom URL (required)
+#   site_url          homepage, used in the report
+#   default_category  category slug applied when the classifier is unsure
+#   quality_weight    0.0-1.0, drives the "Source Quality" scoring component
+#   is_active         set false to disable without deleting
+#   language          feed language code
+
+defaults:
+  quality_weight: 0.7
+  is_active: true
+  language: en
+groups:
+  general:
+    default_category: big-tech
+    sources:
+    - slug: techcrunch
+      name: TechCrunch
+      feed_url: https://techcrunch.com/feed/
+      site_url: https://techcrunch.com
+      default_category: startups
+      quality_weight: 0.75
+    - slug: the-verge
+      name: The Verge
+      feed_url: https://www.theverge.com/rss/index.xml
+      site_url: https://www.theverge.com
+      quality_weight: 0.75
+    - slug: ars-technica
+      name: Ars Technica
+      feed_url: https://feeds.arstechnica.com/arstechnica/index
+      site_url: https://arstechnica.com
+      quality_weight: 0.9
+    - slug: wired
+      name: Wired
+      feed_url: https://www.wired.com/feed/rss
+      site_url: https://www.wired.com
+      quality_weight: 0.75
+  ai:
+    default_category: ai
+    sources:
+    - slug: openai-blog
+      name: OpenAI Blog
+      feed_url: https://openai.com/news/rss.xml
+      site_url: https://openai.com/news
+      quality_weight: 1.0
+    - slug: anthropic
+      name: Anthropic
+      feed_url: https://www.anthropic.com/rss.xml
+      site_url: https://www.anthropic.com/news
+      quality_weight: 1.0
+    - slug: google-ai
+      name: Google AI Blog
+      feed_url: https://blog.google/technology/ai/rss/
+      site_url: https://blog.google/technology/ai/
+      quality_weight: 0.95
+    - slug: meta-ai
+      name: Meta AI
+      feed_url: https://ai.meta.com/blog/rss/
+      site_url: https://ai.meta.com/blog/
+      quality_weight: 0.95
+    - slug: huggingface
+      name: Hugging Face Blog
+      feed_url: https://huggingface.co/blog/feed.xml
+      site_url: https://huggingface.co/blog
+      quality_weight: 0.9
+  programming:
+    default_category: programming
+    sources:
+    - slug: github-blog
+      name: GitHub Blog
+      feed_url: https://github.blog/feed/
+      site_url: https://github.blog
+      quality_weight: 0.9
+    - slug: microsoft-devblogs
+      name: Microsoft DevBlogs
+      feed_url: https://devblogs.microsoft.com/feed/
+      site_url: https://devblogs.microsoft.com
+      quality_weight: 0.85
+    - slug: jetbrains
+      name: JetBrains Blog
+      feed_url: https://blog.jetbrains.com/feed/
+      site_url: https://blog.jetbrains.com
+      quality_weight: 0.85
+  cloud:
+    default_category: cloud
+    sources:
+    - slug: aws-blog
+      name: AWS News Blog
+      feed_url: https://aws.amazon.com/blogs/aws/feed/
+      site_url: https://aws.amazon.com/blogs/aws/
+      quality_weight: 0.95
+    - slug: azure-blog
+      name: Azure Blog
+      feed_url: https://azure.microsoft.com/en-us/blog/feed/
+      site_url: https://azure.microsoft.com/en-us/blog/
+      quality_weight: 0.9
+    - slug: google-cloud-blog
+      name: Google Cloud Blog
+      feed_url: https://cloudblog.withgoogle.com/rss/
+      site_url: https://cloud.google.com/blog
+      quality_weight: 0.9
+    - slug: docker-blog
+      name: Docker Blog
+      feed_url: https://www.docker.com/blog/feed/
+      site_url: https://www.docker.com/blog/
+      default_category: devops
+      quality_weight: 0.85
+    - slug: kubernetes-blog
+      name: Kubernetes Blog
+      feed_url: https://kubernetes.io/feed.xml
+      site_url: https://kubernetes.io/blog/
+      default_category: devops
+      quality_weight: 0.95
+  security:
+    default_category: cybersecurity
+    sources:
+    - slug: cloudflare-blog
+      name: Cloudflare Blog
+      feed_url: https://blog.cloudflare.com/rss/
+      site_url: https://blog.cloudflare.com
+      quality_weight: 0.95
+    - slug: cisco-talos
+      name: Cisco Talos Intelligence
+      feed_url: https://blog.talosintelligence.com/rss/
+      site_url: https://blog.talosintelligence.com
+      quality_weight: 0.95
+    - slug: microsoft-security
+      name: Microsoft Security Blog
+      feed_url: https://www.microsoft.com/en-us/security/blog/feed/
+      site_url: https://www.microsoft.com/en-us/security/blog/
+      quality_weight: 0.9
+    - slug: krebs-on-security
+      name: KrebsOnSecurity
+      feed_url: https://krebsonsecurity.com/feed/
+      site_url: https://krebsonsecurity.com
+      quality_weight: 0.95
+  database:
+    default_category: databases
+    sources:
+    - slug: mongodb-blog
+      name: MongoDB Blog
+      feed_url: https://www.mongodb.com/blog/rss
+      site_url: https://www.mongodb.com/blog
+      quality_weight: 0.8
+    - slug: postgresql-news
+      name: PostgreSQL News
+      feed_url: https://www.postgresql.org/news.rss
+      site_url: https://www.postgresql.org/about/news/
+      quality_weight: 0.95
+    - slug: redis-blog
+      name: Redis Blog
+      feed_url: https://redis.io/blog/feed/
+      site_url: https://redis.io/blog/
+      quality_weight: 0.8
+  open_source:
+    default_category: open-source
+    sources:
+    - slug: linux-foundation
+      name: Linux Foundation
+      feed_url: https://www.linuxfoundation.org/feed
+      site_url: https://www.linuxfoundation.org/blog
+      quality_weight: 0.85
+    - slug: apache-foundation
+      name: Apache Foundation
+      feed_url: https://news.apache.org/foundation/entry/feed/
+      site_url: https://news.apache.org
+      quality_weight: 0.85

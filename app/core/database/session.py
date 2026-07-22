@@ -10,7 +10,7 @@ from loguru import logger
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.config import Settings, get_settings
+from app.core.config.settings import Settings, get_settings
 from app.core.database.base import Base
 
 _engine: Engine | None = None

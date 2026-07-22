@@ -10,7 +10,19 @@ import json
 
 import typer
 
-from app.core.services import bootstrap_database, collect_stats
+from app.core.config import SourceConfig
+from app.core.services import (
+    add_source as add_source_service,
+)
+from app.core.services import (
+    bootstrap_database,
+    collect_stats,
+    run_collection,
+    sync_sources,
+)
+from app.core.services import (
+    list_sources as list_sources_service,
+)
 from app.utils.logging import setup_logging
 
 app = typer.Typer(
@@ -28,9 +40,22 @@ def _todo(phase: int) -> None:
 
 
 @app.command()
-def collect() -> None:
-    """Run the daily collection pipeline (RSS → extract → store)."""
-    _todo(phase=3)
+def collect(
+    source: str | None = typer.Option(None, "--source", "-s", help="Collect one source only."),
+) -> None:
+    """Collect new entries from every active RSS source."""
+    setup_logging()
+    result = run_collection(only=source)
+    typer.secho(
+        f"\nNew articles: {result.new_articles}  |  "
+        f"already stored: {result.duplicates}  |  "
+        f"unchanged feeds: {result.sources_unchanged}  |  "
+        f"failed: {result.sources_failed}/{result.sources_total}",
+        fg=typer.colors.GREEN if result.sources_failed == 0 else typer.colors.YELLOW,
+    )
+    for outcome in result.per_source:
+        if not outcome.ok:
+            typer.secho(f"  ✗ {outcome.slug}: {outcome.error}", fg=typer.colors.RED)
 
 
 @app.command()
@@ -82,15 +107,64 @@ def rebuild_db(
 
 
 @app.command("add-source")
-def add_source() -> None:
-    """Register a new RSS source."""
-    _todo(phase=3)
+def add_source(
+    slug: str = typer.Option(..., help="Unique stable id, e.g. 'my-blog'."),
+    name: str = typer.Option(..., help="Display name."),
+    feed_url: str = typer.Option(..., help="RSS or Atom feed URL."),
+    group: str = typer.Option("general", help="Catalogue group."),
+    site_url: str | None = typer.Option(None, help="Homepage URL."),
+    category: str | None = typer.Option(None, "--category", help="Default category slug."),
+    quality: float = typer.Option(0.7, min=0.0, max=1.0, help="Source quality weight."),
+) -> None:
+    """Register a new RSS source in sources.yaml and the database."""
+    setup_logging()
+    try:
+        config = SourceConfig(
+            slug=slug,
+            name=name,
+            feed_url=feed_url,
+            site_url=site_url,
+            group=group,
+            default_category=category,
+            quality_weight=quality,
+        )
+        add_source_service(config)
+    except (ValueError, FileNotFoundError) as exc:
+        typer.secho(f"Could not add source: {exc}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from exc
+    typer.secho(f"Added {slug} to group '{group}'.", fg=typer.colors.GREEN)
 
 
 @app.command("list-sources")
-def list_sources() -> None:
-    """List all configured RSS sources."""
-    _todo(phase=3)
+def list_sources(
+    sync: bool = typer.Option(False, "--sync", help="Reload sources.yaml into the database first."),
+    as_json: bool = typer.Option(False, "--json", help="Emit raw JSON."),
+) -> None:
+    """List all configured RSS sources with their health status."""
+    setup_logging()
+    if sync:
+        sync_sources()
+    rows = list_sources_service()
+    if as_json:
+        typer.echo(json.dumps(rows, indent=2, ensure_ascii=False))
+        return
+    if not rows:
+        typer.secho(
+            "No sources yet. Run 'list-sources --sync' to load sources.yaml.",
+            fg=typer.colors.YELLOW,
+        )
+        return
+
+    typer.secho(f"\n{'SLUG':<22}{'GROUP':<14}{'W':<6}{'OK':<4}{'FAIL':<6}LAST SUCCESS", bold=True)
+    for row in rows:
+        mark = "✓" if row["is_active"] else "–"
+        colour = typer.colors.RED if row["failures"] else None
+        typer.secho(
+            f"{row['slug']:<22}{row['group']:<14}{row['quality_weight']:<6.2f}"
+            f"{mark:<4}{row['failures']:<6}{row['last_success_at'] or 'never'}",
+            fg=colour,
+        )
+    typer.echo(f"\n{len(rows)} source(s).\n")
 
 
 @app.command()
