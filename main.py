@@ -6,7 +6,12 @@ implementations in later phases. Run ``python main.py --help`` to list them.
 
 from __future__ import annotations
 
+import json
+
 import typer
+
+from app.core.services import bootstrap_database, collect_stats
+from app.utils.logging import setup_logging
 
 app = typer.Typer(
     name="tia",
@@ -59,9 +64,21 @@ def test_email() -> None:
 
 
 @app.command("rebuild-db")
-def rebuild_db() -> None:
-    """Drop and recreate all database tables."""
-    _todo(phase=2)
+def rebuild_db(
+    force: bool = typer.Option(False, "--force", help="Skip the confirmation prompt."),
+    keep_data: bool = typer.Option(
+        False, "--keep-data", help="Create missing tables only; do not drop existing ones."
+    ),
+) -> None:
+    """Create the database schema, optionally dropping existing tables first."""
+    setup_logging()
+    if not keep_data and not force:
+        typer.confirm("This deletes ALL stored articles and reports. Continue?", abort=True)
+    result = bootstrap_database(rebuild=not keep_data)
+    typer.secho(
+        f"Database ready. Categories seeded: {result['categories_created']}",
+        fg=typer.colors.GREEN,
+    )
 
 
 @app.command("add-source")
@@ -77,9 +94,30 @@ def list_sources() -> None:
 
 
 @app.command()
-def stats() -> None:
+def stats(
+    as_json: bool = typer.Option(False, "--json", help="Emit raw JSON instead of a table.")
+) -> None:
     """Show database and pipeline statistics."""
-    _todo(phase=2)
+    setup_logging()
+    data = collect_stats()
+    if as_json:
+        typer.echo(json.dumps(data, indent=2, ensure_ascii=False))
+        return
+
+    typer.secho("\nTech Intelligence Agent — statistics", fg=typer.colors.CYAN, bold=True)
+    typer.echo(f"  Database        : {data['database']}")
+    typer.echo(
+        f"  Sources         : {data['sources_active']} active / {data['sources_total']} total"
+    )
+    typer.echo(f"  Articles        : {data['articles_total']}")
+    for status, count in sorted(data["articles_by_status"].items()):
+        typer.echo(f"      {status:<12}: {count}")
+    typer.echo(f"  Weekly reports  : {data['reports_total']}")
+    typer.echo(f"  Emails sent     : {data['emails_total']}")
+    typer.echo(f"  Job runs        : {data['jobs_total']}")
+    for job in data["recent_jobs"]:
+        typer.echo(f"      {job['started_at']}  {job['name']:<16} {job['status']}")
+    typer.echo("")
 
 
 if __name__ == "__main__":
