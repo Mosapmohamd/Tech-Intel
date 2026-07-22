@@ -3,6 +3,7 @@
 from app.core.services.bootstrap import bootstrap_database, collect_stats
 from app.core.services.collection import add_source, list_sources, run_collection, sync_sources
 from app.core.services.diagnostics import FeedHealth, check_feeds
+from app.core.services.extraction import run_extraction
 
 __all__ = [
     "FeedHealth",
@@ -12,5 +13,6 @@ __all__ = [
     "collect_stats",
     "list_sources",
     "run_collection",
+    "run_extraction",
     "sync_sources",
 ]

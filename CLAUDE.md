@@ -33,8 +33,10 @@ mypy شغّال بـ `strict = true`. متضيفش `# type: ignore` من غير 
 - ✅ **Phase 1** — هيكل المشروع، CLI skeleton بـ 10 أوامر، pyproject + tooling
 - ✅ **Phase 2** — قاعدة البيانات: 11 جدول، 10 repositories، bootstrap + stats، 20 اختبار
 - ✅ **Phase 3** — RSS collectors: sources.yaml بـ26 مصدر، FeedClient بـconditional GET، parser، CollectorAgent، 75 اختبار
-- ⬜ **Phase 4** — استخراج المحتوى (trafilatura) ← **التالي**
-- ⬜ Phase 5 إزالة تكرار · 6 تقييم · 7 Ollama · 8 تقارير
+- ✅ **Phase 4** — استخراج المحتوى: ArticleDownloader (retry + headers من client.py)،
+  trafilatura wrapper، Cleaning Agent، ExtractorAgent، أمر `extract`، 88 اختبار
+- ⬜ **Phase 5** — إزالة التكرار ← **التالي**
+- ⬜ Phase 6 تقييم · 7 Ollama · 8 تقارير
 - ⬜ Phase 9 إيميل HTML · 10 scheduler · 11 اختبارات · 12 توثيق
 
 ## قرارات معمارية مهمة
@@ -64,6 +66,11 @@ mypy شغّال بـ `strict = true`. متضيفش `# type: ignore` من غير 
 - **الإعدادات كلها من `Settings`** (`app/core/config/settings.py`) بـ prefix
   `TIA_`. ممنوع `os.environ` في أي مكان تاني. المسارات النسبية بتتربط بجذر
   المشروع مش بمجلد التشغيل.
+- **الاستخراج بيتفرّق عن الجمع.** `ArticleDownloader` (بدون conditional GET)
+  بيستورد `DEFAULT_USER_AGENT` و`TRANSIENT_STATUSES` من
+  `collector/rss/client.py` بدل ما يكررهم. المقال اللي محتواه أقل من
+  `min_extracted_words` بيبقى `SKIPPED` (مش خطأ)؛ فشل التحميل أو
+  `trafilatura` بيرجع `None` بيبقى `FAILED` مع `error_message`.
 
 ## أوامر شائعة
 
@@ -72,6 +79,7 @@ uv pip install -e ".[dev]"
 python main.py rebuild-db --force   # يبني الجداول ويزرع الـ 15 تصنيف
 python main.py stats                # إحصائيات القاعدة
 python main.py check-feeds          # يفحص صحة كل الفيدات
+python main.py extract --limit 20   # يستخرج محتوى المقالات المجمّعة
 python main.py --help               # كل الأوامر
 ```
 

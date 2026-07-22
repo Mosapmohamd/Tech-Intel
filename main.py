@@ -19,6 +19,7 @@ from app.core.services import (
     check_feeds,
     collect_stats,
     run_collection,
+    run_extraction,
     sync_sources,
 )
 from app.core.services import (
@@ -78,6 +79,26 @@ def check_feeds_command(
     typer.secho(f"\n{len(results) - len(failures)}/{len(results)} feeds healthy.\n", fg=colour)
     if failures:
         raise typer.Exit(code=1)
+
+
+@app.command()
+def extract(
+    limit: int | None = typer.Option(
+        None, "--limit", "-l", help="Max number of articles to process."
+    ),
+) -> None:
+    """Extract full article content for collected articles."""
+    setup_logging()
+    result = run_extraction(limit=limit)
+    typer.secho(
+        f"\nExtracted: {result.extracted}  |  skipped: {result.skipped}  |  "
+        f"failed: {result.failed}  |  processed: {result.processed}",
+        fg=typer.colors.GREEN if result.failed == 0 else typer.colors.YELLOW,
+    )
+    for failure in result.failures:
+        typer.secho(
+            f"  ✗ [{failure.article_id}] {failure.url}: {failure.error}", fg=typer.colors.RED
+        )
 
 
 @app.command()

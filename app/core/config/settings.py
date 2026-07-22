@@ -54,6 +54,12 @@ class Settings(BaseSettings):
     top_stories_count: int = Field(default=10, gt=0)
     worth_watching_count: int = Field(default=3, gt=0)
 
+    # ── Extraction ────────────────────────────────────────────
+    min_extracted_words: int = Field(default=150, gt=0)
+    extraction_timeout_seconds: int = Field(default=30, gt=0)
+    extraction_attempts: int = Field(default=3, gt=0)
+    extraction_batch_size: int = Field(default=50, gt=0)
+
     # ── Schedule ──────────────────────────────────────────────
     daily_collect_hour: int = Field(default=6, ge=0, le=23)
     weekly_report_day: Weekday = "sun"
